@@ -2,7 +2,7 @@
   "name": "wanwu",
   "displayName": "Wanwu",
   "description": "万物 - Claude Code Router 命令行工具扩展",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "publisher": "wanwu",
   "icon": "src/Wanwu.png",
   "engines": {

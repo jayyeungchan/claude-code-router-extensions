@@ -60,29 +60,22 @@ function openTerminalEditorSide() {
 		return;
 	}
 
-	// 创建终端，配置为在编辑器侧边显示
-	editorTerminal = vscode.window.createTerminal({
-		name: 'CCR 编辑器终端',
-		cwd: workspaceFolder.uri.fsPath,
-		message: '🚀 Claude Code Router - 编辑器终端已启动\n正在自动执行 ccr code...\n',
-		// 设置终端位置为编辑器侧边
-		location: vscode.TerminalLocation.Editor
+	// 使用 workbench.action.createTerminalEditorSide 命令创建终端
+	vscode.commands.executeCommand('workbench.action.createTerminalEditorSide').then(() => {
+		// 等待终端创建完成，然后获取活动终端
+		setTimeout(() => {
+			editorTerminal = vscode.window.activeTerminal;
+			if (editorTerminal) {
+				// 发送欢迎信息并自动执行 ccr code
+				editorTerminal.sendText('echo "🚀 CCR 编辑器侧边终端已启动！"');
+				editorTerminal.sendText('echo "📍 当前目录: $(pwd)"');
+				editorTerminal.sendText('echo "⚡ 正在自动启动 ccr code..."');
+				editorTerminal.sendText('');
+				// 自动执行 ccr code 命令
+				editorTerminal.sendText('ccr code');
+			}
+		}, 800);
 	});
-
-	// 显示终端
-	editorTerminal.show();
-	
-	// 发送欢迎信息并自动执行 ccr code
-	setTimeout(() => {
-		if (editorTerminal) {
-			editorTerminal.sendText('echo "🚀 CCR 编辑器侧边终端已启动！"');
-			editorTerminal.sendText('echo "📍 当前目录: $(pwd)"');
-			editorTerminal.sendText('echo "⚡ 正在自动启动 ccr code..."');
-			editorTerminal.sendText('');
-			// 自动执行 ccr code 命令
-			editorTerminal.sendText('ccr code');
-		}
-	}, 800);
 
 	vscode.window.showInformationMessage('CCR 编辑器终端已在侧边打开，正在自动执行 ccr code...');
 }
