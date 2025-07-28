@@ -1,0 +1,91 @@
+{
+  "name": "wanwu",
+  "displayName": "Wanwu",
+  "description": "万物 - Claude Code Router 命令行工具扩展",
+  "version": "0.0.1",
+  "publisher": "wanwu",
+  "icon": "src/Wanwu.png",
+  "engines": {
+    "vscode": "^1.74.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/wanwu-ai/wanwu.git"
+  },
+  "activationEvents": [],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "ccr.start",
+        "title": "Start CCR",
+        "category": "CCR",
+        "icon": "src/Wanwu.png"
+      },
+      {
+        "command": "ccr.code",
+        "title": "CCR Code",
+        "category": "CCR"
+      },
+      {
+        "command": "ccr.openTerminalEditorSide",
+        "title": "Open Terminal in Editor Side",
+        "category": "CCR",
+        "icon": "src/Wanwu.png"
+      }
+    ],
+    "menus": {
+      "editor/title": [
+        {
+          "command": "ccr.openTerminalEditorSide",
+          "when": "true",
+          "group": "navigation"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "ccr.start",
+          "when": "true"
+        },
+        {
+          "command": "ccr.code",
+          "when": "true"
+        },
+        {
+          "command": "ccr.openTerminalEditorSide",
+          "when": "true"
+        }
+      ]
+    },
+    "terminal": {
+      "profiles": [
+        {
+          "id": "ccr-terminal",
+          "title": "CCR Terminal"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js"
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.1",
+    "@types/node": "16.x",
+    "@types/vscode": "^1.74.0",
+    "@typescript-eslint/eslint-plugin": "^5.45.0",
+    "@typescript-eslint/parser": "^5.45.0",
+    "@vscode/test-electron": "^2.2.0",
+    "eslint": "^8.28.0",
+    "mocha": "^10.1.0",
+    "typescript": "^4.9.4"
+  }
+}
