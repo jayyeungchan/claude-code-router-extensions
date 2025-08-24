@@ -40,6 +40,36 @@
         "command": "ccr.openConfig",
         "title": "Open CCR Config",
         "category": "CCR"
+      },
+      {
+        "command": "ccr.createCheckpoint",
+        "title": "Create Checkpoint",
+        "category": "CCR"
+      },
+      {
+        "command": "ccr.restoreCheckpoint",
+        "title": "Restore Checkpoint",
+        "category": "CCR"
+      },
+      {
+        "command": "ccr.newConversation",
+        "title": "New Conversation",
+        "category": "CCR"
+      },
+      {
+        "command": "ccr.loadConversation",
+        "title": "Load Conversation",
+        "category": "CCR"
+      },
+      {
+        "command": "ccr.exportConversation",
+        "title": "Export Conversation",
+        "category": "CCR"
+      },
+      {
+        "command": "ccr.importConversation",
+        "title": "Import Conversation",
+        "category": "CCR"
       }
     ],
     "menus": {
@@ -65,6 +95,30 @@
         },
         {
           "command": "ccr.openConfig",
+          "when": "true"
+        },
+        {
+          "command": "ccr.createCheckpoint",
+          "when": "true"
+        },
+        {
+          "command": "ccr.restoreCheckpoint",
+          "when": "true"
+        },
+        {
+          "command": "ccr.newConversation",
+          "when": "true"
+        },
+        {
+          "command": "ccr.loadConversation",
+          "when": "true"
+        },
+        {
+          "command": "ccr.exportConversation",
+          "when": "true"
+        },
+        {
+          "command": "ccr.importConversation",
           "when": "true"
         }
       ]
