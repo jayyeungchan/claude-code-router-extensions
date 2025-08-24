@@ -1,4 +1,6 @@
 import * as vscode from 'vscode';
+import * as path from 'path';
+import * as os from 'os';
 
 let ccrTerminal: vscode.Terminal | undefined;
 // 新增：编辑器区域的终端
@@ -22,10 +24,16 @@ export function activate(context: vscode.ExtensionContext) {
 		openTerminalEditorSide();
 	});
 
+	// 新增：快速打开 CCR 配置文件
+	const openCcrConfigCommand = vscode.commands.registerCommand('ccr.openConfig', async () => {
+		await openCcrConfig();
+	});
+
 	context.subscriptions.push(
 		startCcrCommand, 
 		ccrCodeCommand, 
-		openTerminalEditorSideCommand
+		openTerminalEditorSideCommand,
+		openCcrConfigCommand
 	);
 
 	// 监听终端关闭事件
@@ -130,4 +138,46 @@ export function deactivate() {
 	if (editorTerminal) {
 		editorTerminal.dispose();
 	}
+}
+
+// ===== Helper: 打开/创建 CCR 配置文件 =====
+async function openCcrConfig() {
+    try {
+        const home = os.homedir();
+        const configDir = path.join(home, '.claude-code-router');
+        const configFile = path.join(configDir, 'config.json');
+
+        const dirUri = vscode.Uri.file(configDir);
+        const fileUri = vscode.Uri.file(configFile);
+
+        // 确保目录存在
+        try {
+            await vscode.workspace.fs.createDirectory(dirUri);
+        } catch (_) {
+            // 忽略目录已存在等错误
+        }
+
+        // 如果文件不存在则创建一个空的 JSON 骨架
+        const exists = await fileExists(fileUri);
+        if (!exists) {
+            const defaultContent = Buffer.from('{\n  \n}\n');
+            await vscode.workspace.fs.writeFile(fileUri, defaultContent);
+        }
+
+        // 打开并显示文档
+        const doc = await vscode.workspace.openTextDocument(fileUri);
+        await vscode.window.showTextDocument(doc, { preview: false });
+        vscode.window.showInformationMessage('已打开 CCR 配置文件: ' + configFile);
+    } catch (err: any) {
+        vscode.window.showErrorMessage('打开 CCR 配置失败: ' + (err?.message ?? String(err)));
+    }
+}
+
+async function fileExists(uri: vscode.Uri): Promise<boolean> {
+    try {
+        await vscode.workspace.fs.stat(uri);
+        return true;
+    } catch (_) {
+        return false;
+    }
 }

@@ -35,6 +35,11 @@
         "title": "Open Terminal in Editor Side",
         "category": "CCR",
         "icon": "src/Wanwu.png"
+      },
+      {
+        "command": "ccr.openConfig",
+        "title": "Open CCR Config",
+        "category": "CCR"
       }
     ],
     "menus": {
@@ -56,6 +61,10 @@
         },
         {
           "command": "ccr.openTerminalEditorSide",
+          "when": "true"
+        },
+        {
+          "command": "ccr.openConfig",
           "when": "true"
         }
       ]

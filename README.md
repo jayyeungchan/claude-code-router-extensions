@@ -40,6 +40,15 @@
 - 快速执行 `ccr code` 命令
 - 自动创建终端（如果不存在）
 
+#### 4. 打开CCR配置
+```
+命令: CCR: Open CCR Config
+快捷键: 可通过命令面板访问
+```
+- 一键打开 `~/.claude-code-router/config.json`
+- 若文件或目录不存在将自动创建
+- 便于快速查看与编辑 CCR 配置
+
 ## 📋 使用方法
 
 ### 方法一：通过编辑器标题栏按钮（推荐）
@@ -58,6 +67,13 @@
 - `ccr.openTerminalEditorSide`
 - `ccr.start`
 - `ccr.code`
+- `ccr.openConfig`
+
+## ⚙️ 配置文件位置
+
+- 路径: `~/.claude-code-router/config.json`
+- 作用: 存放 Claude Code Router 的全局配置
+- 打开方式: 通过命令面板执行 `CCR: Open CCR Config`
 
 ## 🛠️ 技术实现
 
