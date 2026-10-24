@@ -11,6 +11,7 @@
 ### Changed
 
 - 命令 ID 命名空间迁移到 `wanwu.*`，命令分类与状态栏统一为 Wanwu
+- 扩展 ID 变更为 `WanwuCLI.wanwu-cli`，发布者迁移至 WanwuCLI
 - 移除旧的终端启动命令及其实现
 - 将 checkpoint 提供类重命名为 `CheckpointManager`
 - 路由配置命令改为 `wanwu.openRouterConfig`

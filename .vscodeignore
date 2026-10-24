@@ -1,5 +1,7 @@
 .vscode/**
 .vscode-test/**
+.serena/**
+.qoder/**
 src/**
 !src/Wanwu.png
 .gitignore

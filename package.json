@@ -1,9 +1,9 @@
 {
-  "name": "wanwu",
-  "displayName": "Wanwu",
+  "name": "wanwu-cli",
+  "displayName": "Wanwu CLI",
   "description": "万物 - 多 Agent CLI 启动器与工作区检查点工具",
   "version": "0.0.4",
-  "publisher": "wanwu",
+  "publisher": "WanwuCLI",
   "icon": "src/Wanwu.png",
   "engines": {
     "vscode": "^1.74.0"
@@ -13,7 +13,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/wanwu-ai/wanwu.git"
+    "url": "https://github.com/jayyeungchan/claude-code-router-extensions"
   },
   "activationEvents": [],
   "main": "./out/extension.js",
@@ -162,8 +162,8 @@
     "pretest": "npm run compile && npm run lint",
     "lint": "eslint src --ext ts",
     "test": "node ./out/test/runTest.js",
-    "package": "npx vsce package",
-    "publish": "npx vsce publish"
+    "package": "npx @vscode/vsce package",
+    "publish": "npx @vscode/vsce publish"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.1",
