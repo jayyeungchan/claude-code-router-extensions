@@ -5,12 +5,28 @@ import * as fs from 'fs';
 import { UIManager } from './ui';
 import { ConversationManager } from './conversation';
 
-let ccrTerminal: vscode.Terminal | undefined;
-// 新增：编辑器区域的终端
-let editorTerminal: vscode.Terminal | undefined;
+interface AgentConfig {
+    label: string;
+    command: string;
+}
 
-// ClaudeChatProvider 类实现 checkpoint 功能
-class ClaudeChatProvider {
+const DEFAULT_AGENTS: AgentConfig[] = [
+    { label: 'Claude', command: 'claude' },
+    { label: 'Codex', command: 'codex' },
+    { label: 'Pi', command: 'pi' },
+    { label: 'OpenCode', command: 'opencode' },
+    { label: 'Qoder', command: 'qodercli' }
+];
+
+const agentTerminals = new Map<string, vscode.Terminal>();
+
+interface AgentQuickPickItem extends vscode.QuickPickItem {
+    agent?: AgentConfig;
+    action?: 'edit';
+}
+
+// CheckpointManager 类实现 checkpoint 功能
+class CheckpointManager {
     private _context: vscode.ExtensionContext;
     private _backupRepoPath: string;
     private _workspacePath: string;
@@ -44,8 +60,8 @@ class ClaudeChatProvider {
             // 初始化 Git 备份仓库
             const { exec } = require('child_process');
             const initCmd = `git --git-dir="${this._backupRepoPath}" --work-tree="${this._workspacePath}" init`;
-            const configCmd1 = `git --git-dir="${this._backupRepoPath}" config user.name "CCR Checkpoint"`;
-            const configCmd2 = `git --git-dir="${this._backupRepoPath}" config user.email "checkpoint@ccr.local"`;
+            const configCmd1 = `git --git-dir="${this._backupRepoPath}" config user.name "Wanwu Checkpoint"`;
+            const configCmd2 = `git --git-dir="${this._backupRepoPath}" config user.email "checkpoint@wanwu.local"`;
 
             await new Promise<void>((resolve, reject) => {
                 exec(initCmd, (error: any) => {
@@ -157,7 +173,7 @@ class ClaudeChatProvider {
         this._conversationManager.addMessage('user', userMessage, sha);
 
         // 通知 UI
-        this._notifyRestoreOption(sha);
+        this._notifyCheckpointAvailable();
         this._uiManager.showCreateCheckpointSuccess(sha);
     }
 
@@ -198,9 +214,9 @@ class ClaudeChatProvider {
         }
     }
 
-    private _notifyRestoreOption(commitSha: string): void {
-        // 使用 UI 管理器显示恢复选项
-        this._uiManager.showRestoreOption(commitSha, this._commits[this._commits.length - 1]?.message || '');
+    private _notifyCheckpointAvailable(): void {
+        // 更新状态栏提示
+        this._uiManager.showCheckpointAvailable(this._commits[this._commits.length - 1]?.message || '');
     }
 
     private _notifyRestoreSuccess(commitSha: string): void {
@@ -218,180 +234,157 @@ class ClaudeChatProvider {
     }
 }
 
-// 全局 ClaudeChatProvider 实例
-let claudeChatProvider: ClaudeChatProvider | undefined;
+// 全局 CheckpointManager 实例
+let checkpointManager: CheckpointManager | undefined;
+let conversationManager: ConversationManager | undefined;
 
 export function activate(context: vscode.ExtensionContext) {
-	console.log('Claude Code Router 扩展已激活!');
+	console.log('Wanwu 扩展已激活!');
 
-	// 初始化 ClaudeChatProvider
-	claudeChatProvider = new ClaudeChatProvider(context);
+	checkpointManager = new CheckpointManager(context);
+	conversationManager = ConversationManager.getInstance(context);
 
-	// 注册 start ccr 命令
-	const startCcrCommand = vscode.commands.registerCommand('ccr.start', () => {
-		startCcrTerminal();
+	const openAgentTerminalCommand = vscode.commands.registerCommand('wanwu.openAgentTerminal', async () => {
+		await openAgentTerminal();
 	});
 
-	// 注册 ccr code 命令
-	const ccrCodeCommand = vscode.commands.registerCommand('ccr.code', () => {
-		executeCcrCode();
+	const openRouterConfigCommand = vscode.commands.registerCommand('wanwu.openRouterConfig', async () => {
+		await openRouterConfig();
 	});
 
-	// 新增：注册在编辑器侧边打开终端的命令
-	const openTerminalEditorSideCommand = vscode.commands.registerCommand('ccr.openTerminalEditorSide', () => {
-		openTerminalEditorSide();
-	});
-
-	// 新增：快速打开 CCR 配置文件
-	const openCcrConfigCommand = vscode.commands.registerCommand('ccr.openConfig', async () => {
-		await openCcrConfig();
-	});
-
-	// 注册 checkpoint 相关命令
-	const createCheckpointCommand = vscode.commands.registerCommand('ccr.createCheckpoint', async () => {
+	const createCheckpointCommand = vscode.commands.registerCommand('wanwu.createCheckpoint', async () => {
 		await createCheckpoint();
 	});
 
-	const restoreCheckpointCommand = vscode.commands.registerCommand('ccr.restoreCheckpoint', async () => {
+	const restoreCheckpointCommand = vscode.commands.registerCommand('wanwu.restoreCheckpoint', async () => {
 		await restoreCheckpoint();
 	});
 
-	// 注册会话管理命令
-	const newConversationCommand = vscode.commands.registerCommand('ccr.newConversation', async () => {
+	const newConversationCommand = vscode.commands.registerCommand('wanwu.newConversation', async () => {
 		await newConversation();
 	});
 
-	const loadConversationCommand = vscode.commands.registerCommand('ccr.loadConversation', async () => {
+	const loadConversationCommand = vscode.commands.registerCommand('wanwu.loadConversation', async () => {
 		await loadConversation();
 	});
 
-	const exportConversationCommand = vscode.commands.registerCommand('ccr.exportConversation', async () => {
+	const exportConversationCommand = vscode.commands.registerCommand('wanwu.exportConversation', async () => {
 		await exportConversation();
 	});
 
-	const importConversationCommand = vscode.commands.registerCommand('ccr.importConversation', async () => {
+	const importConversationCommand = vscode.commands.registerCommand('wanwu.importConversation', async () => {
 		await importConversation();
 	});
 
 	context.subscriptions.push(
-		startCcrCommand, 
-		ccrCodeCommand, 
-		openTerminalEditorSideCommand,
-		openCcrConfigCommand,
+		openAgentTerminalCommand,
+		openRouterConfigCommand,
 		createCheckpointCommand,
 		restoreCheckpointCommand,
 		newConversationCommand,
 		loadConversationCommand,
 		exportConversationCommand,
-		importConversationCommand
+		importConversationCommand,
+		vscode.window.onDidCloseTerminal((terminal) => {
+			for (const [key, current] of agentTerminals) {
+				if (current === terminal) {
+					agentTerminals.delete(key);
+				}
+			}
+		})
 	);
-
-	// 监听终端关闭事件
-	vscode.window.onDidCloseTerminal((terminal) => {
-		if (terminal === ccrTerminal) {
-			ccrTerminal = undefined;
-		}
-		if (terminal === editorTerminal) {
-			editorTerminal = undefined;
-		}
-	});
 }
 
-// 新增：在编辑器侧边打开终端并执行 ccr code
-function openTerminalEditorSide() {
-	// 获取当前工作区的根目录
+// 选择 Agent 并在编辑器侧边打开终端
+function getAgents(): AgentConfig[] {
+	const configured = vscode.workspace.getConfiguration('wanwu').get<AgentConfig[]>('agents');
+	if (!Array.isArray(configured)) {
+		return DEFAULT_AGENTS;
+	}
+	return configured
+		.filter(agent => agent && typeof agent.label === 'string' && typeof agent.command === 'string')
+		.map(agent => ({ label: agent.label.trim(), command: agent.command.trim() }))
+		.filter(agent => agent.label !== '' && agent.command !== '');
+}
+
+async function openAgentSettings(): Promise<void> {
+	await vscode.commands.executeCommand('workbench.action.openSettings', 'wanwu.agents');
+}
+
+function launchAgent(agent: AgentConfig, workspaceFolder: vscode.WorkspaceFolder): void {
+	const key = `${agent.label}::${agent.command}`;
+	const existing = agentTerminals.get(key);
+	if (existing) {
+		existing.show();
+		return;
+	}
+
+	const terminal = vscode.window.createTerminal({
+		name: `Wanwu: ${agent.label}`,
+		cwd: workspaceFolder.uri.fsPath,
+		location: { viewColumn: vscode.ViewColumn.Beside, preserveFocus: false }
+	});
+	agentTerminals.set(key, terminal);
+	terminal.show();
+	terminal.sendText(agent.command);
+}
+
+async function openAgentTerminal(): Promise<void> {
 	const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
 	if (!workspaceFolder) {
 		vscode.window.showErrorMessage('请先打开一个工作区');
 		return;
 	}
 
-	// 如果编辑器终端已存在，显示它并执行 ccr code；否则创建新的
-	if (editorTerminal) {
-		editorTerminal.show();
-		setTimeout(() => {
-			if (editorTerminal) {
-				editorTerminal.sendText('ccr code');
-			}
-		}, 300);
-		vscode.window.showInformationMessage('编辑器终端已显示，正在执行 ccr code...');
+	const agents = getAgents();
+	if (agents.length === 0) {
+		const action = await vscode.window.showWarningMessage(
+			'尚未配置 Agent，请在设置中添加 wanwu.agents。',
+			'打开设置'
+		);
+		if (action === '打开设置') {
+			await openAgentSettings();
+		}
 		return;
 	}
 
-	// 使用 workbench.action.createTerminalEditorSide 命令创建终端
-	vscode.commands.executeCommand('workbench.action.createTerminalEditorSide').then(() => {
-		// 等待终端创建完成，然后获取活动终端
-		setTimeout(() => {
-			editorTerminal = vscode.window.activeTerminal;
-			if (editorTerminal) {
-				// 发送欢迎信息并自动执行 ccr code
-				editorTerminal.sendText('echo "🚀 CCR 编辑器侧边终端已启动！"');
-				editorTerminal.sendText('echo "📍 当前目录: $(pwd)"');
-				editorTerminal.sendText('echo "⚡ 正在自动启动 ccr code..."');
-				editorTerminal.sendText('');
-				// 自动执行 ccr code 命令
-				editorTerminal.sendText('ccr code');
-			}
-		}, 800);
+	const items: AgentQuickPickItem[] = [
+		...agents.map(agent => ({
+			label: agent.label,
+			description: agent.command,
+			agent
+		})),
+		{ label: '', kind: vscode.QuickPickItemKind.Separator },
+		{ label: '管理 Agent 列表…', action: 'edit' }
+	];
+
+	const selected = await vscode.window.showQuickPick(items, {
+		placeHolder: '选择要启动的 Agent'
 	});
 
-	vscode.window.showInformationMessage('CCR 编辑器终端已在侧边打开，正在自动执行 ccr code...');
-}
-
-function startCcrTerminal() {
-	// 获取当前工作区的根目录
-	const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
-	if (!workspaceFolder) {
-		vscode.window.showErrorMessage('请先打开一个工作区');
+	if (!selected) {
 		return;
 	}
 
-	// 如果终端已存在，显示它；否则创建新的终端
-	if (ccrTerminal) {
-		ccrTerminal.show();
-		vscode.window.showInformationMessage('CCR 终端已打开');
-	} else {
-		ccrTerminal = vscode.window.createTerminal({
-			name: 'CCR Terminal',
-			cwd: workspaceFolder.uri.fsPath,
-			message: 'Claude Code Router 终端已启动\n输入 "ccr code" 开始使用'
-		});
-		ccrTerminal.show();
-		vscode.window.showInformationMessage('CCR 终端已创建并打开');
+	if (selected.action === 'edit') {
+		await openAgentSettings();
+		return;
+	}
+
+	if (selected.agent) {
+		launchAgent(selected.agent, workspaceFolder);
 	}
 }
-
-function executeCcrCode() {
-	// 确保终端存在
-	if (!ccrTerminal) {
-		startCcrTerminal();
-		// 等待终端创建完成后执行命令
-		setTimeout(() => {
-			if (ccrTerminal) {
-				ccrTerminal.sendText('ccr code');
-			}
-		}, 500);
-	} else {
-		ccrTerminal.show();
-		ccrTerminal.sendText('ccr code');
-	}
-	
-	vscode.window.showInformationMessage('已执行 CCR Code 命令');
-}
-
-
 
 export function deactivate() {
-	if (ccrTerminal) {
-		ccrTerminal.dispose();
+	for (const terminal of agentTerminals.values()) {
+		terminal.dispose();
 	}
-	if (editorTerminal) {
-		editorTerminal.dispose();
-	}
+	agentTerminals.clear();
 }
 
-// ===== Helper: 打开/创建 CCR 配置文件 =====
-async function openCcrConfig() {
+// ===== Helper: 打开/创建路由配置文件 =====
+async function openRouterConfig() {
     try {
         const home = os.homedir();
         const configDir = path.join(home, '.claude-code-router');
@@ -417,9 +410,9 @@ async function openCcrConfig() {
         // 打开并显示文档
         const doc = await vscode.workspace.openTextDocument(fileUri);
         await vscode.window.showTextDocument(doc, { preview: false });
-        vscode.window.showInformationMessage('已打开 CCR 配置文件: ' + configFile);
+        vscode.window.showInformationMessage('已打开路由配置文件: ' + configFile);
     } catch (err: any) {
-        vscode.window.showErrorMessage('打开 CCR 配置失败: ' + (err?.message ?? String(err)));
+        vscode.window.showErrorMessage('打开路由配置失败: ' + (err?.message ?? String(err)));
     }
 }
 
@@ -434,8 +427,8 @@ async function fileExists(uri: vscode.Uri): Promise<boolean> {
 
 // Checkpoint 功能相关函数
 async function createCheckpoint() {
-    if (!claudeChatProvider) {
-        vscode.window.showErrorMessage('ClaudeChatProvider 未初始化');
+    if (!checkpointManager) {
+        vscode.window.showErrorMessage('CheckpointManager 未初始化');
         return;
     }
 
@@ -446,7 +439,7 @@ async function createCheckpoint() {
 
     if (userMessage !== undefined) {
         try {
-            await claudeChatProvider.createCheckpoint(userMessage);
+            await checkpointManager.createCheckpoint(userMessage);
             vscode.window.showInformationMessage('Checkpoint 创建成功');
         } catch (error) {
             vscode.window.showErrorMessage(`创建 checkpoint 失败: ${error}`);
@@ -455,12 +448,12 @@ async function createCheckpoint() {
 }
 
 async function restoreCheckpoint() {
-    if (!claudeChatProvider) {
-        vscode.window.showErrorMessage('ClaudeChatProvider 未初始化');
+    if (!checkpointManager) {
+        vscode.window.showErrorMessage('CheckpointManager 未初始化');
         return;
     }
 
-    const commits = claudeChatProvider.getCommits();
+    const commits = checkpointManager.getCommits();
     if (commits.length === 0) {
         vscode.window.showInformationMessage('无可恢复的 checkpoint');
         return;
@@ -478,7 +471,7 @@ async function restoreCheckpoint() {
 
     if (selected) {
         try {
-            await claudeChatProvider.restoreToCommit(selected.sha);
+            await checkpointManager.restoreToCommit(selected.sha);
         } catch (error) {
             vscode.window.showErrorMessage(`恢复 checkpoint 失败: ${error}`);
         }
@@ -487,8 +480,8 @@ async function restoreCheckpoint() {
 
 // 会话管理函数
 async function newConversation() {
-    if (!claudeChatProvider) {
-        vscode.window.showErrorMessage('ClaudeChatProvider 未初始化');
+    if (!checkpointManager) {
+        vscode.window.showErrorMessage('CheckpointManager 未初始化');
         return;
     }
 
@@ -502,8 +495,8 @@ async function newConversation() {
 }
 
 async function loadConversation() {
-    if (!claudeChatProvider) {
-        vscode.window.showErrorMessage('ClaudeChatProvider 未初始化');
+    if (!checkpointManager) {
+        vscode.window.showErrorMessage('CheckpointManager 未初始化');
         return;
     }
 
@@ -526,8 +519,8 @@ async function loadConversation() {
 }
 
 async function exportConversation() {
-    if (!claudeChatProvider) {
-        vscode.window.showErrorMessage('ClaudeChatProvider 未初始化');
+    if (!checkpointManager) {
+        vscode.window.showErrorMessage('CheckpointManager 未初始化');
         return;
     }
 
@@ -566,8 +559,8 @@ async function exportConversation() {
 }
 
 async function importConversation() {
-    if (!claudeChatProvider) {
-        vscode.window.showErrorMessage('ClaudeChatProvider 未初始化');
+    if (!checkpointManager) {
+        vscode.window.showErrorMessage('CheckpointManager 未初始化');
         return;
     }
 
@@ -590,10 +583,8 @@ async function importConversation() {
 
 // 获取会话管理器实例
 function getConversationManager(): ConversationManager {
-    if (!claudeChatProvider) {
-        throw new Error('ClaudeChatProvider 未初始化');
+    if (!conversationManager) {
+        throw new Error('ConversationManager 未初始化');
     }
-    // 这需要通过另一种方式获取，因为 ConversationManager 是私有的
-    // 这里需要重构代码来支持这个功能
-    throw new Error('需要重构代码来支持会话管理器获取');
+    return conversationManager;
 }

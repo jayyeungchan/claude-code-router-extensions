@@ -1,8 +1,8 @@
 {
   "name": "wanwu",
   "displayName": "Wanwu",
-  "description": "万物 - Claude Code Router 命令行工具扩展",
-  "version": "0.0.3",
+  "description": "万物 - 多 Agent CLI 启动器与工作区检查点工具",
+  "version": "0.0.4",
   "publisher": "wanwu",
   "icon": "src/Wanwu.png",
   "engines": {
@@ -20,116 +20,139 @@
   "contributes": {
     "commands": [
       {
-        "command": "ccr.start",
-        "title": "Start CCR",
-        "category": "CCR",
+        "command": "wanwu.openAgentTerminal",
+        "title": "Open Agent Terminal",
+        "category": "Wanwu",
         "icon": "src/Wanwu.png"
       },
       {
-        "command": "ccr.code",
-        "title": "CCR Code",
-        "category": "CCR"
+        "command": "wanwu.openRouterConfig",
+        "title": "Open Router Config",
+        "category": "Wanwu"
       },
       {
-        "command": "ccr.openTerminalEditorSide",
-        "title": "Open Terminal in Editor Side",
-        "category": "CCR",
-        "icon": "src/Wanwu.png"
-      },
-      {
-        "command": "ccr.openConfig",
-        "title": "Open CCR Config",
-        "category": "CCR"
-      },
-      {
-        "command": "ccr.createCheckpoint",
+        "command": "wanwu.createCheckpoint",
         "title": "Create Checkpoint",
-        "category": "CCR"
+        "category": "Wanwu"
       },
       {
-        "command": "ccr.restoreCheckpoint",
+        "command": "wanwu.restoreCheckpoint",
         "title": "Restore Checkpoint",
-        "category": "CCR"
+        "category": "Wanwu"
       },
       {
-        "command": "ccr.newConversation",
+        "command": "wanwu.newConversation",
         "title": "New Conversation",
-        "category": "CCR"
+        "category": "Wanwu"
       },
       {
-        "command": "ccr.loadConversation",
+        "command": "wanwu.loadConversation",
         "title": "Load Conversation",
-        "category": "CCR"
+        "category": "Wanwu"
       },
       {
-        "command": "ccr.exportConversation",
+        "command": "wanwu.exportConversation",
         "title": "Export Conversation",
-        "category": "CCR"
+        "category": "Wanwu"
       },
       {
-        "command": "ccr.importConversation",
+        "command": "wanwu.importConversation",
         "title": "Import Conversation",
-        "category": "CCR"
+        "category": "Wanwu"
       }
     ],
     "menus": {
       "editor/title": [
         {
-          "command": "ccr.openTerminalEditorSide",
+          "command": "wanwu.openAgentTerminal",
           "when": "true",
           "group": "navigation"
         }
       ],
       "commandPalette": [
         {
-          "command": "ccr.start",
+          "command": "wanwu.openAgentTerminal",
           "when": "true"
         },
         {
-          "command": "ccr.code",
+          "command": "wanwu.openRouterConfig",
           "when": "true"
         },
         {
-          "command": "ccr.openTerminalEditorSide",
+          "command": "wanwu.createCheckpoint",
           "when": "true"
         },
         {
-          "command": "ccr.openConfig",
+          "command": "wanwu.restoreCheckpoint",
           "when": "true"
         },
         {
-          "command": "ccr.createCheckpoint",
+          "command": "wanwu.newConversation",
           "when": "true"
         },
         {
-          "command": "ccr.restoreCheckpoint",
+          "command": "wanwu.loadConversation",
           "when": "true"
         },
         {
-          "command": "ccr.newConversation",
+          "command": "wanwu.exportConversation",
           "when": "true"
         },
         {
-          "command": "ccr.loadConversation",
-          "when": "true"
-        },
-        {
-          "command": "ccr.exportConversation",
-          "when": "true"
-        },
-        {
-          "command": "ccr.importConversation",
+          "command": "wanwu.importConversation",
           "when": "true"
         }
       ]
     },
-    "terminal": {
-      "profiles": [
-        {
-          "id": "ccr-terminal",
-          "title": "CCR Terminal"
+    "configuration": {
+      "title": "Wanwu",
+      "properties": {
+        "wanwu.agents": {
+          "type": "array",
+          "scope": "machine",
+          "default": [
+            {
+              "label": "Claude",
+              "command": "claude"
+            },
+            {
+              "label": "Codex",
+              "command": "codex"
+            },
+            {
+              "label": "Pi",
+              "command": "pi"
+            },
+            {
+              "label": "OpenCode",
+              "command": "opencode"
+            },
+            {
+              "label": "Qoder",
+              "command": "qodercli"
+            }
+          ],
+          "markdownDescription": "点击编辑器标题栏的 Wanwu 图标后可选择的 Agent CLI 列表。`command` 可以是完整命令行，例如 `aider --model gpt-4` 或 `npm run dev`。",
+          "items": {
+            "type": "object",
+            "required": [
+              "label",
+              "command"
+            ],
+            "properties": {
+              "label": {
+                "type": "string",
+                "description": "在 QuickPick 和终端标题中显示的名称"
+              },
+              "command": {
+                "type": "string",
+                "description": "在终端中执行的完整命令"
+              }
+            },
+            "additionalProperties": false
+          }
         }
-      ]
+      }
     }
   },
   "scripts": {

@@ -7,9 +7,9 @@ export class UIManager {
 
     private constructor() {
         this._statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
-        this._statusBarItem.text = "$(play-circle) CCR";
-        this._statusBarItem.tooltip = "Claude Code Router Checkpoint";
-        this._statusBarItem.command = "ccr.createCheckpoint";
+        this._statusBarItem.text = "$(play-circle) Wanwu";
+        this._statusBarItem.tooltip = "Wanwu Checkpoint";
+        this._statusBarItem.command = "wanwu.createCheckpoint";
         this._statusBarItem.show();
     }
 
@@ -21,49 +21,12 @@ export class UIManager {
     }
 
     // 显示恢复选项按钮
-    public showRestoreOption(commitSha: string, message: string): void {
-        // 在当前编辑器中显示恢复按钮
-        const editor = vscode.window.activeTextEditor;
-        if (editor) {
-            const decorationRange = new vscode.Range(
-                editor.selection.active.line,
-                0,
-                editor.selection.active.line,
-                0
-            );
-
-            const decorationType = vscode.window.createTextEditorDecorationType({
-                after: {
-                    contentText: ` 🔄 恢复到此 checkpoint (${commitSha.substring(0, 7)})`,
-                    color: '#007acc',
-                    margin: '0 0 0 10px'
-                }
-            });
-
-            editor.setDecorations(decorationType, [decorationRange]);
-
-            // 点击事件监听
-            const disposable = vscode.commands.registerCommand('ccr.restoreToSpecificCommit', async () => {
-                await this.handleRestoreClick(commitSha);
-                decorationType.dispose();
-                disposable.dispose();
-            });
-        }
-
-        // 在状态栏显示提示
-        this._statusBarItem.text = "$(play-circle) CCR (新 checkpoint 可用)";
+    public showCheckpointAvailable(message: string): void {
+        this._statusBarItem.text = "$(play-circle) Wanwu (新 checkpoint 可用)";
         this._statusBarItem.tooltip = `Checkpoint: ${message}`;
     }
 
     // 处理恢复点击事件
-    private async handleRestoreClick(commitSha: string): Promise<void> {
-        try {
-            await vscode.commands.executeCommand('ccr.restoreToCommit', commitSha);
-        } catch (error) {
-            vscode.window.showErrorMessage(`恢复 checkpoint 失败: ${error}`);
-        }
-    }
-
     // 显示恢复进度
     public showRestoreProgress(commitSha: string): void {
         this._statusBarItem.text = "$(sync~spin) 正在恢复...";
@@ -72,25 +35,25 @@ export class UIManager {
 
     // 显示恢复成功
     public showRestoreSuccess(commitSha: string): void {
-        this._statusBarItem.text = "$(check) CCR 恢复成功";
+        this._statusBarItem.text = "$(check) Wanwu 恢复成功";
         this._statusBarItem.tooltip = `已恢复到 checkpoint: ${commitSha.substring(0, 7)}`;
         
         // 3秒后恢复正常状态
         setTimeout(() => {
-            this._statusBarItem.text = "$(play-circle) CCR";
-            this._statusBarItem.tooltip = "Claude Code Router Checkpoint";
+            this._statusBarItem.text = "$(play-circle) Wanwu";
+            this._statusBarItem.tooltip = "Wanwu Checkpoint";
         }, 3000);
     }
 
     // 显示恢复错误
     public showRestoreError(commitSha: string, error: string): void {
-        this._statusBarItem.text = "$(error) CCR 恢复失败";
+        this._statusBarItem.text = "$(error) Wanwu 恢复失败";
         this._statusBarItem.tooltip = `恢复失败: ${error}`;
         
         // 3秒后恢复正常状态
         setTimeout(() => {
-            this._statusBarItem.text = "$(play-circle) CCR";
-            this._statusBarItem.tooltip = "Claude Code Router Checkpoint";
+            this._statusBarItem.text = "$(play-circle) Wanwu";
+            this._statusBarItem.tooltip = "Wanwu Checkpoint";
         }, 3000);
     }
 
@@ -102,13 +65,13 @@ export class UIManager {
 
     // 显示 checkpoint 创建成功
     public showCreateCheckpointSuccess(commitSha: string): void {
-        this._statusBarItem.text = "$(check) CCR checkpoint 已创建";
+        this._statusBarItem.text = "$(check) Wanwu checkpoint 已创建";
         this._statusBarItem.tooltip = `新 checkpoint: ${commitSha.substring(0, 7)}`;
         
         // 3秒后恢复正常状态
         setTimeout(() => {
-            this._statusBarItem.text = "$(play-circle) CCR";
-            this._statusBarItem.tooltip = "Claude Code Router Checkpoint";
+            this._statusBarItem.text = "$(play-circle) Wanwu";
+            this._statusBarItem.tooltip = "Wanwu Checkpoint";
         }, 3000);
     }
 
